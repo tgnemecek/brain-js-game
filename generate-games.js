@@ -128,7 +128,7 @@ function generateTrainingData(numberOfGames) {
     return games;
 }
 
-var trainingData = generateTrainingData(300);
+var trainingData = generateTrainingData(30);
 const json = JSON.stringify(trainingData);
 fs.writeFileSync('data/games.json', json)
 console.log("Json saved!");

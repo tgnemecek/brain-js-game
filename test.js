@@ -17,8 +17,11 @@ function guessNextStep(currentSteps) {
 
     var output = net.run(currentSteps);
     var matrix = convertStringToMatrix(output);
-    var nextStep = matrix[0];
+    var nextStep = matrix;
     console.log(nextStep);
 }
 
-guessNextStep(["CC- --- -PP"]);
+guessNextStep([
+    "C--------",
+    "CP-------"
+]);

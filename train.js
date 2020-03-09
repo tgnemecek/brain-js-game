@@ -1,6 +1,7 @@
 const brain = require('brain.js');
-const JSONStream = require('JSONStream');
-const net = new brain.recurrent.LSTM();
+const net = new brain.recurrent.LSTM({
+    outputSize: 1
+});
 const fs = require('fs');
 
 var trainingDataJson = fs.readFileSync('data/games.json', {
@@ -9,12 +10,23 @@ var trainingDataJson = fs.readFileSync('data/games.json', {
 
 var trainingData = JSON.parse(trainingDataJson);
 
+var model;
+var modelPath = './data/model.json';
+if (fs.existsSync(modelPath)) {
+    model = fs.readFileSync(modelPath, {
+        encoding: 'utf-8'
+    })
+    model = JSON.parse(model);
+    net.fromJSON(model);
+}
+
 net.train(trainingData, {
     iterations: 100,
     log: true
 })
 
-const modelJson = net.toJSON()
-const model = JSON.stringify(modelJson);
+model = net.toJSON();
+model = JSON.stringify(model);
+
 fs.writeFileSync('data/model.json', model)
 console.log("Model Saved!");
