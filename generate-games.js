@@ -1,29 +1,6 @@
-var winner = false;
-
-function replaceAt(string, index, replacement) {
-    return string.substr(0, index) + replacement + string.substr(index + replacement.length);
-}
-
-function generateNextPlays(lastBoard, currentPlayer) {
-    var newPlays = [];
-    for (var i = 0; i < lastBoard.length; i++) {
-        if (lastBoard.charAt(i) === "-") {
-            var newBoard = replaceAt(lastBoard, i, currentPlayer);
-            newPlays.push(newBoard)
-        }
-    }
-    return newPlays;
-}
-
-function isItDone(games) {
-    return games.every((game) => {
-        var lastBoard = game.slice(-9);
-        if (verifyIfOver(lastBoard)) {
-            return true;
-        }
-        return lastBoard.search("-") === -1;
-    })
-}
+const brain = require('brain.js');
+const net = new brain.recurrent.LSTM()
+const fs = require('fs');
 
 function verifyIfOver(board) {
     // Verify Rows
@@ -32,8 +9,10 @@ function verifyIfOver(board) {
         if (board.charAt(cell) !== "-") {
             if (board.charAt(cell + 1) === board.charAt(cell)) {
                 if (board.charAt(cell + 2) === board.charAt(cell)) {
-                    winner = board.charAt(cell);
-                    return true;
+                    return {
+                        finished: true,
+                        winner: board.charAt(cell)
+                    }
                 }
             }
         }
@@ -45,8 +24,10 @@ function verifyIfOver(board) {
         if (board.charAt(cell) !== "-") {
             if (board.charAt(cell + skip) === board.charAt(cell)) {
                 if (board.charAt(cell + skip * 2) === board.charAt(cell)) {
-                    winner = board.charAt(cell);
-                    return true;
+                    return {
+                        finished: true,
+                        winner: board.charAt(cell)
+                    }
                 }
             }
         }
@@ -56,57 +37,85 @@ function verifyIfOver(board) {
         // Across from top left
         if (board.charAt(4) === board.charAt(0)) {
             if (board.charAt(8) === board.charAt(4)) {
-                winner = board.charAt(4);
-                return true;
+                return {
+                    finished: true,
+                    winner: board.charAt(4)
+                }
             }
         }
         // Across from top right
         if (board.charAt(4) === board.charAt(2)) {
             if (board.charAt(6) === board.charAt(4)) {
-                winner = board.charAt(4);
-                return true;
+                return {
+                    finished: true,
+                    winner: board.charAt(4)
+                }
             }
         }
     }
     // Check if tie
     if (board.search("-") === -1) {
-        winner = false;
-        return true;
+        return {
+            finished: true,
+            winner: "tie"
+        }
     }
-    return false;
+    return {
+        finished: false,
+        winner: false
+    }
 }
 
-function main() {
-    var games = ['---------'];
-    var currentPlayer = "C";
+function replaceAt(string, index, replacement) {
+    return string.substr(0, index) + replacement + string.substr(index + replacement.length);
+}
 
-    
+function getRandomPlayer() {
+    var random = Math.round(Math.random());
+    if (random === 1) {
+        return "C"
+    } else return "P"
+}
 
-    
+function getRandomGame() {
+    console.log("CREATING NEW GAME...")
+    var board = '---------';
+    var nextPlayer = getRandomPlayer();
     var count = 0;
-    while (!isItDone(games)) {
-        console.log('starting loop #' + count);
-        if (count >= 7) break;
-        count++;
-        var newGames = [];
-        games.forEach((game) => {
-            var lastBoard = game.slice(-9);
-            var isOver = verifyIfOver(lastBoard);
-            if (!isOver) {
-                var plays = generateNextPlays(lastBoard, currentPlayer)
-                    .map((play) => {
-                        return game + " " + play;
-                    })
-                newGames = newGames.concat(plays);
-            }
-        })
-        if (currentPlayer === "P") {
-            currentPlayer = "C";
-        } else currentPlayer = "P";
-        
-        games = [...newGames];
+    var gameStatus = {};
+    while (!gameStatus.finished) {
+        var newBoard = board.slice(-9);
+        var random = Math.round(Math.random() * 9);
+        while (board.charAt(random) !== "-") {
+            random = Math.round(Math.random() * 9);
+        }
+
+        newBoard = replaceAt(newBoard, random, nextPlayer);
+        if (nextPlayer === "C") {
+            nextPlayer = "P";
+        } else nextPlayer = "C";
+        board += " " + newBoard;
+        gameStatus = verifyIfOver(newBoard);
     }
-    console.log(games)
+    if (gameStatus.winner === "C") {
+        console.log("GAME SUCCESSFUL!")
+        return board;
+    } else {
+        console.log("GAME FAILED, RESTARTING...")
+        return getRandomGame();
+    }
 }
 
-main()
+function createRandomGames(numberOfGames) {
+    var result = [];
+    for (var i = 0; i < numberOfGames; i++) {
+        result.push(getRandomGame());
+    }
+    return result;
+}
+
+module.exports = function generate(numberOfGames) {
+    var games = createRandomGames(numberOfGames);
+    var json = JSON.stringify(games);
+    fs.writeFileSync('data/games.json', json);
+}
