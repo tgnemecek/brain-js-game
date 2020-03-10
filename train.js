@@ -21,7 +21,7 @@ if (fs.existsSync(modelPath)) {
 }
 
 net.train(trainingData, {
-    iterations: 100,
+    iterations: 500,
     log: true
 })
 

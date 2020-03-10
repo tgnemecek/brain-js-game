@@ -16,12 +16,8 @@ function guessNextStep(currentSteps) {
     net.fromJSON(model);
 
     var output = net.run(currentSteps);
-    var matrix = convertStringToMatrix(output);
-    var nextStep = matrix;
+    var nextStep = output.trim().split(" ")[0];
     console.log(nextStep);
 }
 
-guessNextStep([
-    "C--------",
-    "CP-------"
-]);
+guessNextStep('-------C-');

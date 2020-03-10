@@ -1,134 +1,112 @@
-const JSONStream = require('JSONStream');
-const fs = require('fs');
+var winner = false;
 
-var lastPlayer = "P"; // P = player, C = computer
-var winner;
-
-function getMark() {
-    if (lastPlayer === "P") {
-        lastPlayer = "C";
-    } else lastPlayer = "P";
-    return lastPlayer;
+function replaceAt(string, index, replacement) {
+    return string.substr(0, index) + replacement + string.substr(index + replacement.length);
 }
 
-function verifyIfOver(matrix) {
-    // left column
-    if (matrix[0][0] !== "-"
-        && matrix[0][0] === matrix[1][0]
-        && matrix[0][0] === matrix[2][0]
-    ) {
-        winner = matrix[0][0];
+function generateNextPlays(lastBoard, currentPlayer) {
+    var newPlays = [];
+    for (var i = 0; i < lastBoard.length; i++) {
+        if (lastBoard.charAt(i) === "-") {
+            var newBoard = replaceAt(lastBoard, i, currentPlayer);
+            newPlays.push(newBoard)
+        }
+    }
+    return newPlays;
+}
+
+function isItDone(games) {
+    return games.every((game) => {
+        var lastBoard = game.slice(-9);
+        if (verifyIfOver(lastBoard)) {
+            return true;
+        }
+        return lastBoard.search("-") === -1;
+    })
+}
+
+function verifyIfOver(board) {
+    // Verify Rows
+    for (var i = 0; i < 3; i++) { // Each row
+        var cell = i * 3;
+        if (board.charAt(cell) !== "-") {
+            if (board.charAt(cell + 1) === board.charAt(cell)) {
+                if (board.charAt(cell + 2) === board.charAt(cell)) {
+                    winner = board.charAt(cell);
+                    return true;
+                }
+            }
+        }
+    }
+    // Verify Columns
+    for (var i = 0; i < 3; i++) { // Each column
+        var cell = i;
+        var skip = 3;
+        if (board.charAt(cell) !== "-") {
+            if (board.charAt(cell + skip) === board.charAt(cell)) {
+                if (board.charAt(cell + skip * 2) === board.charAt(cell)) {
+                    winner = board.charAt(cell);
+                    return true;
+                }
+            }
+        }
+    }
+    // Check center cell
+    if (board.charAt(4) !== "-") {
+        // Across from top left
+        if (board.charAt(4) === board.charAt(0)) {
+            if (board.charAt(8) === board.charAt(4)) {
+                winner = board.charAt(4);
+                return true;
+            }
+        }
+        // Across from top right
+        if (board.charAt(4) === board.charAt(2)) {
+            if (board.charAt(6) === board.charAt(4)) {
+                winner = board.charAt(4);
+                return true;
+            }
+        }
+    }
+    // Check if tie
+    if (board.search("-") === -1) {
+        winner = false;
         return true;
     }
-    // top row
-    if (matrix[0][0] !== "-"
-        && matrix[0][0] === matrix[0][1]
-        && matrix[0][0] === matrix[0][2]
-    ) {
-        winner = matrix[0][0];
-        return true;
-    }
-    // across (top left to bottom right)
-    if (matrix[0][0] !== "-"
-        && matrix[0][0] === matrix[1][1]
-        && matrix[0][0] === matrix[2][2]
-    ) {
-        winner = matrix[0][0];
-        return true;
-    }
-    // middle column
-    if (matrix[0][1] !== "-"
-        && matrix[0][1] === matrix[1][1]
-        && matrix[0][1] === matrix[2][1]
-    ) {
-        winner = matrix[0][1];
-        return true;
-    }
-    // right column
-    if (matrix[0][2] !== "-"
-        && matrix[0][2] === matrix[1][2]
-        && matrix[0][2] === matrix[2][2]
-    ) {
-        winner = matrix[0][2];
-        return true;
-    }
-    // across (top right to bottom left)
-    if (matrix[0][2] !== "-"
-        && matrix[0][2] === matrix[1][1]
-        && matrix[0][2] === matrix[2][0]
-    ) {
-        winner = matrix[0][2];
-        return true;
-    }
-    // middle row
-    if (matrix[1][0] !== "-"
-        && matrix[1][0] === matrix[1][1]
-        && matrix[1][0] === matrix[1][2]
-    ) {
-        winner = matrix[1][0];
-        return true;
-    }
-    // bottom row
-    if (matrix[2][0] !== "-"
-        && matrix[2][0] === matrix[2][1]
-        && matrix[2][0] === matrix[2][2]
-    ) {
-        winner = matrix[2][0];
-        return true;
-    }
-    // all fields filled (tie)
-    if (matrix[0][0] !== "-"
-        && matrix[0][1] !== "-"
-        && matrix[0][2] !== "-"
-        && matrix[1][0] !== "-"
-        && matrix[1][1] !== "-"
-        && matrix[1][2] !== "-"
-        && matrix[2][0] !== "-"
-        && matrix[2][1] !== "-"
-        && matrix[2][2] !== "-"
-    ) return true;
     return false;
 }
 
-function convertMatrixToString(matrix) {
-    var subMatrix = matrix.map((row) => {
-        return row.join("");
-    })
-    return subMatrix.join("");
-}
+function main() {
+    var games = ['---------'];
+    var currentPlayer = "C";
 
-function generateTrainingData(numberOfGames) {
-    var games = [];
-    for (var g = 0; g < numberOfGames; g++) {
-        var steps = [];
-        var matrix = [
-            ["-", "-", "-"],
-            ["-", "-", "-"],
-            ["-", "-", "-"]
-        ]
-        for (var i = 0; i < 9; i++) {
-            var randomX, randomY;
-            while (randomX === undefined || randomY === undefined ||
-                matrix[randomY][randomX] !== "-") {
-                randomX = Math.floor(Math.random() * 3);
-                randomY = Math.floor(Math.random() * 3);
+    
+
+    
+    var count = 0;
+    while (!isItDone(games)) {
+        console.log('starting loop #' + count);
+        if (count >= 7) break;
+        count++;
+        var newGames = [];
+        games.forEach((game) => {
+            var lastBoard = game.slice(-9);
+            var isOver = verifyIfOver(lastBoard);
+            if (!isOver) {
+                var plays = generateNextPlays(lastBoard, currentPlayer)
+                    .map((play) => {
+                        return game + " " + play;
+                    })
+                newGames = newGames.concat(plays);
             }
-
-            matrix[randomY][randomX] = getMark();
-            steps.push(convertMatrixToString(matrix));
-            var isOver = verifyIfOver(matrix);
-            if (isOver) break;
-        }
-        if (!winner || winner === "C") {
-            games.push(steps);
-        }
-        // console.log(steps)
+        })
+        if (currentPlayer === "P") {
+            currentPlayer = "C";
+        } else currentPlayer = "P";
+        
+        games = [...newGames];
     }
-    console.log(games);
-    return games;
+    console.log(games)
 }
 
-var trainingData = generateTrainingData(30);
-const json = JSON.stringify(trainingData);
-fs.writeFileSync('data/games.json', json)
-console.log("Json saved!");
+main()
