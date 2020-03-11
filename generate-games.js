@@ -1,5 +1,5 @@
 const brain = require('brain.js');
-const net = new brain.recurrent.LSTM()
+const net = new brain.recurrent.LSTM();
 const fs = require('fs');
 
 function verifyIfOver(board) {
@@ -70,52 +70,56 @@ function replaceAt(string, index, replacement) {
     return string.substr(0, index) + replacement + string.substr(index + replacement.length);
 }
 
-function getRandomPlayer() {
-    var random = Math.round(Math.random());
-    if (random === 1) {
-        return "C"
-    } else return "P"
+function makePlay(pIndex, board) {
+    function loop() {
+        return Math.round(Math.random() * 9);
+    }
+    let random = loop();
+    while (board.charAt(random) !== "-") {
+        random = loop();
+    }
+    board = replaceAt(board, random, pIndex.toString());
+    return board;
 }
 
-function getRandomGame() {
-    console.log("CREATING NEW GAME...")
-    var board = '---------';
-    var nextPlayer = getRandomPlayer();
-    var count = 0;
-    var gameStatus = {};
-    while (!gameStatus.finished) {
-        var newBoard = board.slice(-9);
-        var random = Math.round(Math.random() * 9);
-        while (board.charAt(random) !== "-") {
-            random = Math.round(Math.random() * 9);
+function checkGameState(board) {
+    if (board.search("-") === -1) {
+        return 'ended';
+    } else return 'playing';
+}
+
+function generateRandomFinishedBoards() {
+    let board = '---------';
+    let gameState = 'playing';
+    let count = 0;
+    while (gameState === 'playing') {
+        // console.log(count)
+        count++;
+        for (let pIndex = 0; pIndex < 2; pIndex++) {
+            console.log(board)
+            board = makePlay(pIndex, board);
+            gameState = checkGameState(board);
+            if (gameState === 'ended') break;
         }
-
-        newBoard = replaceAt(newBoard, random, nextPlayer);
-        if (nextPlayer === "C") {
-            nextPlayer = "P";
-        } else nextPlayer = "C";
-        board += " " + newBoard;
-        gameStatus = verifyIfOver(newBoard);
     }
-    if (gameStatus.winner === "C") {
-        console.log("GAME SUCCESSFUL!")
-        return board;
-    } else {
-        console.log("GAME FAILED, RESTARTING...")
-        return getRandomGame();
-    }
+    console.log(board);
 }
 
-function createRandomGames(numberOfGames) {
-    var result = [];
-    for (var i = 0; i < numberOfGames; i++) {
-        result.push(getRandomGame());
-    }
-    return result;
+let winBoards = [
+    '111------',
+    '---111---',
+    '------111',
+    '1--1--1--',
+    '-1--1--1-',
+    '--1--1--1',
+    '1---1---1',
+    '--1-1-1--'
+]
+
+let filledBoards = [];
+
+for (let i = 0; i < winBoards.length; i++) {
+
 }
 
-module.exports = function generate(numberOfGames) {
-    var games = createRandomGames(numberOfGames);
-    var json = JSON.stringify(games);
-    fs.writeFileSync('data/games.json', json);
-}
+// generateRandomFinishedBoards();

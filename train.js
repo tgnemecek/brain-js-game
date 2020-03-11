@@ -5,7 +5,7 @@ const net = new brain.recurrent.LSTM({
 const fs = require('fs');
 const moment = require('moment');
 
-module.exports = function train() {
+function train() {
     var startDate = moment();
     console.log("Training started on " + startDate.format('DD-MM HH:MM'));
     var trainingDataJson = fs.readFileSync('data/games.json', {
@@ -24,8 +24,17 @@ module.exports = function train() {
         net.fromJSON(model);
     }
 
-    net.train(trainingData, {
-        iterations: 50,
+    net.train([
+        '111------',
+        '---111---',
+        '------111',
+        '1--1--1--',
+        '-1--1--1-',
+        '--1--1--1',
+        '1---1---1',
+        '--1-1-1--'
+    ], {
+        iterations: 1000,
         log: true
     })
 
@@ -36,4 +45,8 @@ module.exports = function train() {
     console.log("Training ended on " + moment().format('DD-MM HH:MM'));
     console.log(moment().diff(startDate, "minutes") + "minutes have passed.");
 }
+
+train()
+
+module.exports = train;
 

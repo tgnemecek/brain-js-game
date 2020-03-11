@@ -10,5 +10,5 @@ var model = JSON.parse(modelJson);
 
 net.fromJSON(model);
 
-var output = net.run('--------- C-------- '); // Dont forget the space at the last char!
+var output = net.run('---------'); // Dont forget the space at the last char!
 console.log(output);
